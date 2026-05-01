@@ -27,7 +27,7 @@ $router->post('/api/auth/register', function () {
     $stmt = $db->prepare(
         "INSERT INTO users (user_id, user_pwd, nickname, phone_num, email, region) VALUES (?, ?, ?, ?, ?, ?)"
     );
-    $stmt->execute([$userId, $userPwd, $nickname, $phoneNum, $email, $region]);
+    $stmt->execute([$userId, password_hash($userPwd, PASSWORD_DEFAULT), $nickname, $phoneNum, $email, $region]);
 
     Response::json([
         'message' => '회원가입이 완료되었습니다.',
@@ -42,10 +42,10 @@ $router->post('/api/auth/login', function () {
     $userPwd = (string)($body['user_pwd'] ?? '');
 
     $db = getDb();
-    $stmt = $db->prepare("SELECT * FROM users WHERE user_id = ? AND user_pwd = ?");
-    $stmt->execute([$userId, $userPwd]);
+    $stmt = $db->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$userId]);
     $user = $stmt->fetch();
-    if (!$user) {
+    if (!$user || !password_verify($userPwd, (string)$user['user_pwd'])) {
         Response::error('아이디 또는 비밀번호가 올바르지 않습니다.', 401);
     }
 
@@ -136,7 +136,7 @@ $router->post('/api/auth/password/reset', function () {
     }
 
     $stmt = $db->prepare("UPDATE users SET user_pwd = ? WHERE user_id = ?");
-    $stmt->execute([$newPwd, $userId]);
+    $stmt->execute([password_hash($newPwd, PASSWORD_DEFAULT), $userId]);
     Response::json(['message' => '비밀번호가 재설정되었습니다.']);
 });
 
@@ -147,7 +147,7 @@ $router->put('/api/auth/password/change', function () {
     $currentPwd = (string)($body['current_pwd'] ?? '');
     $newPwd     = (string)($body['new_pwd']     ?? '');
 
-    if ($currentPwd !== (string)$current['user_pwd']) {
+    if (!password_verify($currentPwd, (string)$current['user_pwd'])) {
         Response::error('현재 비밀번호가 올바르지 않습니다.', 400);
     }
     if ($currentPwd === $newPwd) {
@@ -157,7 +157,7 @@ $router->put('/api/auth/password/change', function () {
     $uid = (string)$current['user_id'];
     $db = getDb();
     $stmt = $db->prepare("UPDATE users SET user_pwd = ? WHERE user_id = ?");
-    $stmt->execute([$newPwd, $uid]);
+    $stmt->execute([password_hash($newPwd, PASSWORD_DEFAULT), $uid]);
 
     Response::json(['message' => '비밀번호가 성공적으로 변경되었습니다.']);
 });

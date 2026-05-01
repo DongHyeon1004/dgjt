@@ -32,6 +32,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
+// ===== 보안 헤더 =====
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
 // ===== uploads 디렉토리 보장 =====
 foreach (config('upload_dirs') as $dir) {
     if (!is_dir($dir)) {

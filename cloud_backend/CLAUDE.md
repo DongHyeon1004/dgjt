@@ -186,4 +186,18 @@ Blind SQLi 포인트 3개를 제외하고 나머지 SQLi는 모두 prepared stat
   - Router.php base path 자동 제거 로직 삭제 (Alias 환경에서 `/api` prefix를 잘못 제거하던 버그)
   - 헬스체크 라우트: `'/'` → `'/api'`로 변경
   - Apache RewriteRule을 `.htaccess`에서 `dgjt.conf <Directory>` 블록으로 이동
+- **비밀번호 bcrypt 해싱** (`2026-05-02`)
+  - `auth.php` 4곳 수정: 회원가입 INSERT, 로그인 verify, 비밀번호 재설정/변경 UPDATE
+  - `password_hash(PASSWORD_DEFAULT)` / `password_verify()` 적용
+- **보안 헤더 추가** (`2026-05-02`) — `index.php`에 일괄 적용
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+- **로컬 개발 환경 세팅** (`2026-05-02`)
+  - `config.php` DB fallback 추가 (127.0.0.1 / secondhand_platform / root / 1234)
+  - `config.php` CORS에 localhost / localhost:8080 / 127.0.0.1 추가
+  - Laragon VirtualHost 파일 생성 (`C:\laragon\etc\apache2\sites-enabled\dgjt.conf`)
+  - hosts 파일에 `127.0.0.1 dgjt.local` 추가
+  - `product.php` / `share.php` LIMIT/OFFSET PDO 바인딩 → 직접 삽입으로 변경 (클라우드 배포 시 원복 필요)
 
