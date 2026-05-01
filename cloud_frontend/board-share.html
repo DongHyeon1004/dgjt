@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>번당나눔 - 당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">당장나눔</h2>
+          <p class="text-gray-500 mt-1">이웃들의 무료 나눔 상품을 만나보세요</p>
+        </div>
+        <a href="/sell.html?type=share"
+          class="flex items-center gap-2 px-5 py-3 bg-primary text-white text-sm font-bold rounded-2xl shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+          <i data-lucide="heart-handshake" width="16" height="16"></i>
+          나눔 글쓰기
+        </a>
+      </div>
+      <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"></div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script type="module" src="/js/pages/board-share.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+<header class="sticky top-0 z-50 w-full glass">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-20">
+      <a href="/" class="flex items-center gap-2">
+        <img src="/assets/image.png" alt="당근" style="height:32px; width:32px; object-fit:contain" />
+        <span class="text-3xl font-bold text-gray-900 tracking-tighter">당근장터</span>
+      </a>
+
+      <div class="hidden md:flex flex-1 max-w-lg mx-10">
+        <form id="header-search" class="relative w-full group">
+          <input name="search" type="text" placeholder="상품명, 지역명, @상점명 입력"
+            class="w-full bg-gray-100 border-2 border-transparent px-4 py-2.5 pl-10 rounded-lg focus:outline-none focus:bg-white focus:border-primary transition-all duration-300" />
+          <i data-lucide="search"
+            class="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors" width="20"
+            height="20"></i>
+        </form>
+      </div>
+
+      <div class="flex items-center gap-5 lg:gap-8 text-gray-600">
+        <a href="/write.html" class="flex flex-col items-center gap-1 hover:text-primary transition-colors group">
+          <div class="p-2 group-hover:bg-rose-50 rounded-xl transition-colors">
+            <i data-lucide="pencil" width="24" height="24"></i>
+          </div>
+          <span class="text-[10px] font-bold hidden lg:block">글작성</span>
+        </a>
+        <a href="/wishlist.html" class="flex flex-col items-center gap-1 hover:text-primary transition-colors group">
+          <div class="p-2 group-hover:bg-rose-50 rounded-xl transition-colors">
+            <i data-lucide="heart" width="24" height="24"></i>
+          </div>
+          <span class="text-[10px] font-bold hidden lg:block">찜한상품</span>
+        </a>
+
+        <a href="/mystore.html" class="flex flex-col items-center gap-1 hover:text-primary transition-colors group">
+          <div class="p-2 group-hover:bg-rose-50 rounded-xl transition-colors">
+            <i data-lucide="user" width="24" height="24"></i>
+          </div>
+          <span class="text-[10px] font-bold hidden lg:block">내상점</span>
+        </a>
+
+        <a href="/admin/" id="header-admin-link"
+          class="hidden flex-col items-center gap-1 hover:text-primary transition-colors group">
+          <div class="p-2 group-hover:bg-rose-50 rounded-xl transition-colors">
+            <i data-lucide="lock" width="24" height="24"></i>
+          </div>
+          <span class="text-[10px] font-bold hidden lg:block">관리자</span>
+        </a>
+
+        <button id="header-logout-btn" type="button"
+          class="hidden sm:flex items-center gap-2 px-5 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all">
+          <i data-lucide="log-out" width="16" height="16"></i>
+          로그아웃
+        </button>
+        <a href="/login.html" id="header-login-link"
+          class="hidden sm:flex px-5 py-2 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+          로그인&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;회원가입
+        </a>
+
+        <button class="md:hidden" type="button">
+          <i data-lucide="menu" width="24" height="24"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-t border-gray-100 hidden md:block">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <ul class="flex gap-8 text-sm font-medium text-gray-600">
+        <li><a href="/board-sell.html" class="hover:text-primary transition-colors">당장판매</a></li>
+        <li><a href="/board-share.html" class="hover:text-primary transition-colors">당장나눔</a></li>
+      </ul>
+    </div>
+  </div>
+</header>

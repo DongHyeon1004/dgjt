@@ -1,0 +1,13 @@
+{
+  "name": "dgjt-frontend-php",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build:css": "tailwindcss -i ./css/tailwind-input.css -o ./css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./css/tailwind-input.css -o ./css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.4",
+    "tailwindcss": "^4.2.4"
+  }
+}

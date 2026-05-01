@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>찜한 상품 - 당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow">
+    <div class="max-w-7xl mx-auto px-4 py-12">
+      <div class="mb-10 flex items-center gap-3">
+        <div class="p-3 bg-rose-50 rounded-2xl text-primary">
+          <i data-lucide="heart" width="32" height="32" fill="currentColor"></i>
+        </div>
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">찜한 상품</h1>
+          <p class="text-gray-500 font-medium">관심있는 상품들을 한눈에 확인하세요.</p>
+        </div>
+      </div>
+
+      <div id="wishlist-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script type="module" src="/js/pages/wishlist.js"></script>
+</body>
+</html>

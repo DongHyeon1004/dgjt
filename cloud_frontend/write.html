@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>글작성 - 당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow flex items-center justify-center">
+    <div class="max-w-2xl w-full mx-auto px-4 py-16">
+      <div class="text-center mb-12">
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">어떤 글을 작성할까요?</h1>
+        <p class="text-gray-500 mt-3">게시판을 선택해주세요.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-6">
+        <a href="/sell.html?type=sell"
+          class="group flex flex-col items-center gap-5 p-10 bg-white rounded-3xl shadow-sm border-2 border-transparent hover:border-primary hover:shadow-lg transition-all">
+          <div class="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white text-primary transition-all">
+            <i data-lucide="tag" width="36" height="36"></i>
+          </div>
+          <div class="text-center">
+            <p class="text-xl font-extrabold text-gray-900">당장판매</p>
+            <p class="text-sm text-gray-400 mt-1">중고 물건을 판매해요</p>
+          </div>
+        </a>
+        <a href="/sell.html?type=share"
+          class="group flex flex-col items-center gap-5 p-10 bg-white rounded-3xl shadow-sm border-2 border-transparent hover:border-primary hover:shadow-lg transition-all">
+          <div class="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white text-primary transition-all">
+            <i data-lucide="heart-handshake" width="36" height="36"></i>
+          </div>
+          <div class="text-center">
+            <p class="text-xl font-extrabold text-gray-900">당장나눔</p>
+            <p class="text-sm text-gray-400 mt-1">무료로 나눔해요</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script type="module">
+    import { bootstrapLayout } from '/js/bootstrap.js';
+    import { isLoggedIn } from '/js/auth/session.js';
+    bootstrapLayout().then(() => {
+      if (!isLoggedIn()) {
+        alert('로그인이 필요한 서비스입니다.');
+        location.replace('/login.html?redirect=/write.html');
+      }
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

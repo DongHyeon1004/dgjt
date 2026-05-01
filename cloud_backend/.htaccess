@@ -1,0 +1,19 @@
+RewriteEngine On
+
+# Authorization 헤더 보존 (Apache가 PHP-CGI나 mod_php로 넘길 때 누락되는 경우 방지)
+RewriteCond %{HTTP:Authorization} ^(.+)$
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%1]
+
+# uploads 디렉토리는 직접 서빙
+RewriteRule ^uploads/ - [L]
+
+# 실제 파일이면 그대로 서빙
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 그 외 모든 요청은 index.php로
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# 업로드 크기 제한 늘리기 (선택)
+php_value upload_max_filesize 20M
+php_value post_max_size 25M

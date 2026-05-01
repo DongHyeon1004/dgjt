@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>상품 수정 - 당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow">
+    <div class="max-w-4xl mx-auto px-4 py-12">
+      <div class="space-y-10">
+        <div class="border-b border-gray-100 pb-6">
+          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">상품 수정</h1>
+          <p class="text-gray-500 mt-2">수정할 상품 정보를 입력해주세요.</p>
+        </div>
+
+        <div id="edit-state" class="text-center py-20 text-gray-400">불러오는 중...</div>
+
+        <form id="edit-form" class="space-y-10 hidden">
+          <div class="space-y-8">
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">상품명</label>
+              <input type="text" name="product_title" required class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all" />
+            </div>
+
+            <input type="hidden" name="category" />
+
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">거래지역</label>
+              <div class="relative">
+                <i data-lucide="map-pin" width="18" height="18" class="absolute left-4 top-4 text-gray-400"></i>
+                <input type="text" placeholder="프로필의 기본 지역이 사용됩니다" disabled class="w-full pl-11 pr-5 py-4 bg-gray-100 border-transparent rounded-2xl text-gray-400 cursor-not-allowed" />
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">가격</label>
+              <div class="relative">
+                <input type="number" name="product_price" required min="0" class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all font-bold text-xl" />
+                <span class="absolute right-5 top-4 text-gray-400 font-bold">원</span>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">설명</label>
+              <textarea name="product_body" required rows="8" class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all resize-none"></textarea>
+            </div>
+          </div>
+
+          <div class="pt-8 border-t border-gray-100 flex gap-4">
+            <button id="edit-cancel" type="button" class="flex-1 py-5 bg-gray-100 text-gray-700 font-bold text-xl rounded-2xl hover:bg-gray-200 transition-all">취소</button>
+            <button id="edit-save" type="submit" class="flex-[2] py-5 bg-primary text-white font-bold text-xl rounded-2xl shadow-xl shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:bg-gray-400">수정 완료</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script type="module" src="/js/pages/edit-product.js"></script>
+</body>
+</html>

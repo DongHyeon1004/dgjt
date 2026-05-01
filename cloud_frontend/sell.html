@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>글작성 - 당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow">
+    <div class="max-w-4xl mx-auto px-4 py-12">
+      <div class="space-y-10">
+        <div class="border-b border-gray-100 pb-6">
+          <h1 id="sell-title" class="text-3xl font-extrabold text-gray-900 tracking-tight">글작성</h1>
+          <p id="sell-desc" class="text-gray-500 mt-2"></p>
+        </div>
+
+        <div id="sell-error" class="hidden bg-red-50 text-red-500 p-4 rounded-xl text-sm font-medium"></div>
+
+        <form id="sell-form" class="space-y-10">
+          <section class="space-y-4">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              상품 이미지 <span class="text-primary text-sm">(<span id="image-count">0</span>/10)</span>
+            </h3>
+            <div class="flex gap-4 overflow-x-auto pb-2" id="image-row">
+              <label class="flex-shrink-0 w-32 h-32 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:bg-gray-100 hover:border-primary hover:text-primary transition-all cursor-pointer">
+                <i data-lucide="camera" width="28" height="28"></i>
+                <span class="text-xs font-bold">이미지 등록</span>
+                <input id="image-input" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" />
+              </label>
+            </div>
+            <p class="text-xs text-gray-400">JPG, PNG, WEBP, GIF만 등록 가능. 파일당 5MB 이하.</p>
+          </section>
+
+          <div class="space-y-8">
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">상품명</label>
+              <input
+                type="text"
+                name="product_title"
+                required
+                placeholder="상품명을 입력해주세요 (최소 2자)"
+                class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all"
+              />
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">거래지역</label>
+              <div class="relative">
+                <i data-lucide="map-pin" width="18" height="18" class="absolute left-4 top-4 text-gray-400"></i>
+                <input
+                  type="text"
+                  placeholder="프로필의 기본 지역이 사용됩니다"
+                  disabled
+                  class="w-full pl-11 pr-5 py-4 bg-gray-100 border-transparent rounded-2xl text-gray-400 cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div id="price-section" class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">가격</label>
+              <div class="relative">
+                <input
+                  type="number"
+                  name="product_price"
+                  min="0"
+                  placeholder="가격을 입력해주세요"
+                  class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all font-bold text-xl"
+                />
+                <span class="absolute right-5 top-4 text-gray-400 font-bold">원</span>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-lg font-bold text-gray-900">설명</label>
+              <textarea
+                name="product_body"
+                required
+                rows="8"
+                placeholder="상품에 대한 상세 설명을 입력해주세요. (브랜드, 모델명, 구매 시기 등)"
+                class="w-full px-5 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-primary focus:outline-none transition-all resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="pt-8 border-t border-gray-100">
+            <button
+              id="sell-submit"
+              type="submit"
+              class="w-full py-5 bg-primary text-white font-bold text-xl rounded-2xl shadow-xl shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:bg-gray-400"
+            >등록하기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script type="module" src="/js/pages/sell.js"></script>
+</body>
+</html>

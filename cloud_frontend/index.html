@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>당근장터</title>
+  <link rel="icon" type="image/png" href="/assets/image.png" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <div id="header"></div>
+  <main class="flex-grow">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <div class="mb-12 rounded-xl overflow-hidden relative mx-auto" style="background-color:#b3e8ff; height:340px; max-width:1280px">
+        <div class="absolute inset-0 flex items-center justify-between" style="padding-inline:95px">
+          <div class="max-w-xl" style="color:#0c4a6e">
+            <h2 class="leading-tight" style="font-size:36px; letter-spacing:0.06em; font-weight:750; margin-bottom:16px">
+              내 근처의 모든 중고<br />
+              <span style="color:#f97316; font-weight:930; font-size:55px">당근장터</span>에서 만나보세요
+            </h2>
+            <p class="opacity-80" style="font-size:23px">
+              매일 다양한 상품이 업데이트됩니다.
+            </p>
+          </div>
+          <img src="/assets/image.png" alt="당근" style="height:260px; opacity:0.9; object-fit:contain; margin-right:15px" />
+        </div>
+      </div>
+
+      <section>
+        <div class="mb-10">
+          <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">오늘의 새로운 상품</h2>
+          <p class="text-gray-500 mt-1">당신을 위한 새로운 아이템들</p>
+        </div>
+
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+          <!-- 스켈레톤은 home.js에서 그려넣음 -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script type="module" src="/js/pages/home.js"></script>
+</body>
+</html>
