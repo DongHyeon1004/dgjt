@@ -18,15 +18,16 @@ $router->post('/api/auth/register', function () {
     }
 
     $db = getDb();
+    // [Blind SQLi 포인트] 의도적 취약점 유지
     $existing = $db->query("SELECT user_id FROM users WHERE user_id = '{$userId}'")->fetch();
     if ($existing) {
         Response::error('이미 사용 중인 아이디입니다.', 409);
     }
 
-    $db->exec(
-        "INSERT INTO users (user_id, user_pwd, nickname, phone_num, email, region) "
-        . "VALUES ('{$userId}', '{$userPwd}', '{$nickname}', '{$phoneNum}', '{$email}', '{$region}')"
+    $stmt = $db->prepare(
+        "INSERT INTO users (user_id, user_pwd, nickname, phone_num, email, region) VALUES (?, ?, ?, ?, ?, ?)"
     );
+    $stmt->execute([$userId, $userPwd, $nickname, $phoneNum, $email, $region]);
 
     Response::json([
         'message' => '회원가입이 완료되었습니다.',
@@ -41,21 +42,24 @@ $router->post('/api/auth/login', function () {
     $userPwd = (string)($body['user_pwd'] ?? '');
 
     $db = getDb();
-    $user = $db->query("SELECT * FROM users WHERE user_id = '{$userId}' AND user_pwd = '{$userPwd}'")->fetch();
+    $stmt = $db->prepare("SELECT * FROM users WHERE user_id = ? AND user_pwd = ?");
+    $stmt->execute([$userId, $userPwd]);
+    $user = $stmt->fetch();
     if (!$user) {
         Response::error('아이디 또는 비밀번호가 올바르지 않습니다.', 401);
     }
 
-    $isAdmin = (bool)$db->query("SELECT user_id FROM admin WHERE user_id = '{$user['user_id']}'")->fetch();
+    $stmt = $db->prepare("SELECT user_id FROM admin WHERE user_id = ?");
+    $stmt->execute([$user['user_id']]);
+    $isAdmin = (bool)$stmt->fetch();
     $accessToken  = Jwt::createAccessToken((string)$user['user_id'], $isAdmin);
     $refreshToken = Jwt::createRefreshToken((string)$user['user_id']);
 
     $expiresAt = date('Y-m-d H:i:s', time() + config('jwt')['refresh_expire']);
-    $uidEsc = $user['user_id'];
-    $db->exec(
-        "INSERT INTO refresh_tokens (user_id, token, expires_at) "
-        . "VALUES ('{$uidEsc}', '{$refreshToken}', '{$expiresAt}')"
+    $stmt = $db->prepare(
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)"
     );
+    $stmt->execute([$user['user_id'], $refreshToken, $expiresAt]);
 
     Response::json([
         'message'       => '로그인 성공',
@@ -71,10 +75,11 @@ $router->post('/api/auth/logout', function () {
     $refreshToken = (string)($body['refresh_token'] ?? '');
 
     $db = getDb();
-    $row = $db->query(
-        "SELECT id FROM refresh_tokens WHERE token = '{$refreshToken}' "
-        . "AND user_id = '{$current['user_id']}'"
-    )->fetch();
+    $stmt = $db->prepare(
+        "SELECT id FROM refresh_tokens WHERE token = ? AND user_id = ?"
+    );
+    $stmt->execute([$refreshToken, $current['user_id']]);
+    $row = $stmt->fetch();
     if (!$row) {
         Response::error('토큰을 찾을 수 없습니다.', 404);
     }
@@ -96,15 +101,18 @@ $router->post('/api/auth/refresh', function () {
 
     $userId = (string)($payload['sub'] ?? '');
     $db = getDb();
-    $row = $db->query(
-        "SELECT id FROM refresh_tokens WHERE token = '{$refreshToken}' "
-        . "AND user_id = '{$userId}'"
-    )->fetch();
+    $stmt = $db->prepare(
+        "SELECT id FROM refresh_tokens WHERE token = ? AND user_id = ?"
+    );
+    $stmt->execute([$refreshToken, $userId]);
+    $row = $stmt->fetch();
     if (!$row) {
         Response::error('이미 무효화된 토큰입니다. 다시 로그인 해주세요.', 401);
     }
 
-    $isAdmin = (bool)$db->query("SELECT user_id FROM admin WHERE user_id = '{$userId}'")->fetch();
+    $stmt = $db->prepare("SELECT user_id FROM admin WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $isAdmin = (bool)$stmt->fetch();
     $newAccess = Jwt::createAccessToken($userId, $isAdmin);
     Response::json(['access_token' => $newAccess]);
 });
@@ -121,12 +129,14 @@ $router->post('/api/auth/password/reset', function () {
     }
 
     $db = getDb();
+    // [Blind SQLi 포인트] 의도적 취약점 유지
     $user = $db->query("SELECT user_id FROM users WHERE user_id = '{$userId}' AND email = '{$email}'")->fetch();
     if (!$user) {
         Response::error('아이디 또는 이메일이 일치하지 않습니다.', 404);
     }
 
-    $db->exec("UPDATE users SET user_pwd = '{$newPwd}' WHERE user_id = '{$userId}'");
+    $stmt = $db->prepare("UPDATE users SET user_pwd = ? WHERE user_id = ?");
+    $stmt->execute([$newPwd, $userId]);
     Response::json(['message' => '비밀번호가 재설정되었습니다.']);
 });
 
@@ -146,7 +156,8 @@ $router->put('/api/auth/password/change', function () {
 
     $uid = (string)$current['user_id'];
     $db = getDb();
-    $db->exec("UPDATE users SET user_pwd = '{$newPwd}' WHERE user_id = '{$uid}'");
+    $stmt = $db->prepare("UPDATE users SET user_pwd = ? WHERE user_id = ?");
+    $stmt->execute([$newPwd, $uid]);
 
     Response::json(['message' => '비밀번호가 성공적으로 변경되었습니다.']);
 });

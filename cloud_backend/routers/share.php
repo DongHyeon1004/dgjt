@@ -27,14 +27,21 @@ $router->get('/api/shares', function () {
     if ($limit < 1) $limit = 1;
     if ($limit > 100) $limit = 100;
 
-    $sql = "SELECT * FROM share WHERE 1=1";
+    $sql    = "SELECT * FROM share WHERE 1=1";
+    $params = [];
     if ($search !== null && $search !== '') {
-        $sql .= " AND (share_title LIKE '%{$search}%' OR share_body LIKE '%{$search}%')";
+        $sql .= " AND (share_title LIKE ? OR share_body LIKE ?)";
+        $params[] = "%{$search}%";
+        $params[] = "%{$search}%";
     }
-    $sql .= " LIMIT {$limit} OFFSET {$skip}";
+    $sql .= " LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $skip;
 
     $db = getDb();
-    $shares = $db->query($sql)->fetchAll();
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $shares = $stmt->fetchAll();
     foreach ($shares as &$s) {
         $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
     }
@@ -54,10 +61,10 @@ $router->post('/api/shares', function () {
     }
 
     $db = getDb();
-    $db->exec(
-        "INSERT INTO share (user_id, share_title, share_body) "
-        . "VALUES ('{$current['user_id']}', '{$title}', '{$bodyTxt}')"
+    $stmt = $db->prepare(
+        "INSERT INTO share (user_id, share_title, share_body) VALUES (?, ?, ?)"
     );
+    $stmt->execute([$current['user_id'], $title, $bodyTxt]);
     $shareId = (int)$db->lastInsertId();
 
     $share = $db->query("SELECT * FROM share WHERE share_id = {$shareId}")->fetch();
@@ -69,7 +76,9 @@ $router->post('/api/shares', function () {
 $router->get('/api/shares/me', function () {
     $current = Auth::user();
     $db = getDb();
-    $shares = $db->query("SELECT * FROM share WHERE user_id = '{$current['user_id']}'")->fetchAll();
+    $stmt = $db->prepare("SELECT * FROM share WHERE user_id = ?");
+    $stmt->execute([$current['user_id']]);
+    $shares = $stmt->fetchAll();
     foreach ($shares as &$s) {
         $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
     }
@@ -89,7 +98,9 @@ $router->get('/api/shares/{share_id}', function (string $shareId) {
         "SELECT image_url FROM share_image WHERE share_id = {$sid} ORDER BY image_order"
     )->fetchAll();
 
-    $seller = $db->query("SELECT nickname, region FROM users WHERE user_id = '{$share['user_id']}'")->fetch();
+    $stmt = $db->prepare("SELECT nickname, region FROM users WHERE user_id = ?");
+    $stmt->execute([$share['user_id']]);
+    $seller = $stmt->fetch();
 
     $imageUrls = array_column($images, 'image_url');
 
@@ -136,16 +147,19 @@ $router->patch('/api/shares/{share_id}', function (string $shareId) {
     }
 
     $allowed = ['share_title', 'share_body'];
-    $sets = [];
+    $sets    = [];
+    $params  = [];
     foreach ($allowed as $key) {
         if (array_key_exists($key, $body)) {
-            $val = (string)$body[$key];
-            $sets[] = "{$key} = '{$val}'";
+            $sets[]   = "{$key} = ?";
+            $params[] = (string)$body[$key];
         }
     }
     if (!empty($sets)) {
-        $clause = implode(', ', $sets);
-        $db->exec("UPDATE share SET {$clause} WHERE share_id = {$sid}");
+        $clause   = implode(', ', $sets);
+        $params[] = $sid;
+        $stmt = $db->prepare("UPDATE share SET {$clause} WHERE share_id = ?");
+        $stmt->execute($params);
     }
 
     $updated = $db->query("SELECT * FROM share WHERE share_id = {$sid}")->fetch();
@@ -210,10 +224,10 @@ $router->post('/api/shares/{share_id}/images', function (string $shareId) {
         move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $filename);
 
         $imageUrl = '/uploads/shares/' . $filename;
-        $db->exec(
-            "INSERT INTO share_image (share_id, image_url, image_order) "
-            . "VALUES ({$sid}, '{$imageUrl}', {$idx})"
+        $stmt = $db->prepare(
+            "INSERT INTO share_image (share_id, image_url, image_order) VALUES (?, ?, ?)"
         );
+        $stmt->execute([$sid, $imageUrl, $idx]);
     }
 
     Response::json(['message' => count($files) . '개의 이미지가 업로드되었습니다.']);
@@ -257,7 +271,7 @@ $router->post('/api/shares/{share_id}/comments', function (string $shareId) {
     $current = Auth::user();
     $sid = (int)$shareId;
     $body = Request::jsonBody();
-    $content = (string)($body['content'] ?? '');
+    $content  = (string)($body['content'] ?? '');
     $parentId = isset($body['parent_comment_id']) ? (int)$body['parent_comment_id'] : null;
 
     if ($content === '') {
@@ -283,11 +297,10 @@ $router->post('/api/shares/{share_id}/comments', function (string $shareId) {
     }
 
     $uid = $current['user_id'];
-    $parentSql = $parentId !== null ? (string)$parentId : 'NULL';
-    $db->exec(
-        "INSERT INTO share_comment (share_id, user_id, parent_id, content) "
-        . "VALUES ({$sid}, '{$uid}', {$parentSql}, '{$content}')"
+    $stmt = $db->prepare(
+        "INSERT INTO share_comment (share_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)"
     );
+    $stmt->execute([$sid, $uid, $parentId, $content]);
     $cid = (int)$db->lastInsertId();
 
     $comment = $db->query(
@@ -335,7 +348,9 @@ $router->patch('/api/shares/{share_id}/status', function (string $shareId) {
     if ($share['user_id'] !== $current['user_id']) {
         Response::error('권한이 없습니다.', 403);
     }
-    $db->exec("UPDATE share SET share_status = '{$status}' WHERE share_id = {$sid}");
+
+    $stmt = $db->prepare("UPDATE share SET share_status = ? WHERE share_id = ?");
+    $stmt->execute([$status, $sid]);
 
     $updated = $db->query("SELECT * FROM share WHERE share_id = {$sid}")->fetch();
     $updated['thumbnail_url'] = fetchShareThumbnail($db, $sid);

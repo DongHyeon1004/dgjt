@@ -24,6 +24,7 @@ $router->get('/api/users/check-nickname', function () {
         Response::error('닉네임을 입력해주세요.', 400);
     }
     $db = getDb();
+    // [Blind SQLi 포인트] 의도적 취약점 유지
     $exists = $db->query("SELECT user_id FROM users WHERE nickname = '{$nickname}'")->fetch();
     Response::json(['available' => !$exists]);
 });
@@ -35,20 +36,26 @@ $router->patch('/api/users/me', function () {
 
     $allowed = ['nickname', 'phone_num', 'email', 'region'];
     $sets = [];
+    $params = [];
     foreach ($allowed as $key) {
         if (array_key_exists($key, $body)) {
             $val = (string)$body[$key];
-            $sets[] = "{$key} = '{$val}'";
+            $sets[] = "{$key} = ?";
+            $params[] = $val;
         }
     }
 
     $db = getDb();
     if (!empty($sets)) {
         $clause = implode(', ', $sets);
-        $db->exec("UPDATE users SET {$clause} WHERE user_id = '{$current['user_id']}'");
+        $params[] = $current['user_id'];
+        $stmt = $db->prepare("UPDATE users SET {$clause} WHERE user_id = ?");
+        $stmt->execute($params);
     }
 
-    $updated = $db->query("SELECT * FROM users WHERE user_id = '{$current['user_id']}'")->fetch();
+    $stmt = $db->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$current['user_id']]);
+    $updated = $stmt->fetch();
     Response::json($updated);
 });
 
@@ -56,14 +63,17 @@ $router->patch('/api/users/me', function () {
 $router->delete('/api/users/me', function () {
     $current = Auth::user();
     $db = getDb();
-    $db->exec("DELETE FROM users WHERE user_id = '{$current['user_id']}'");
+    $stmt = $db->prepare("DELETE FROM users WHERE user_id = ?");
+    $stmt->execute([$current['user_id']]);
     Response::json(['message' => '회원 탈퇴가 완료되었습니다.']);
 });
 
 // 타 유저 공개 프로필
 $router->get('/api/users/{user_id}', function (string $userId) {
     $db = getDb();
-    $user = $db->query("SELECT * FROM users WHERE user_id = '{$userId}'")->fetch();
+    $stmt = $db->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
     if (!$user) {
         Response::error('유저를 찾을 수 없습니다.', 404);
     }
@@ -73,7 +83,9 @@ $router->get('/api/users/{user_id}', function (string $userId) {
 // 유저별 상품 목록
 $router->get('/api/users/{user_id}/products', function (string $userId) {
     $db = getDb();
-    $products = $db->query("SELECT * FROM product WHERE user_id = '{$userId}'")->fetchAll();
+    $stmt = $db->prepare("SELECT * FROM product WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $products = $stmt->fetchAll();
     foreach ($products as &$p) {
         $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
     }

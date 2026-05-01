@@ -54,22 +54,29 @@ $router->get('/api/products', function () {
     if ($limit < 1) $limit = 1;
     if ($limit > 100) $limit = 100;
 
-    $sql = "SELECT * FROM product WHERE 1=1";
+    $sql    = "SELECT * FROM product WHERE 1=1";
+    $params = [];
     if ($search !== null && $search !== '') {
-        $sql .= " AND (product_title LIKE '%{$search}%' OR product_body LIKE '%{$search}%')";
+        $sql .= " AND (product_title LIKE ? OR product_body LIKE ?)";
+        $params[] = "%{$search}%";
+        $params[] = "%{$search}%";
     }
     if ($minPrice !== null && $minPrice !== '') {
-        $minPrice = (int)$minPrice;
-        $sql .= " AND product_price >= {$minPrice}";
+        $sql .= " AND product_price >= ?";
+        $params[] = (int)$minPrice;
     }
     if ($maxPrice !== null && $maxPrice !== '') {
-        $maxPrice = (int)$maxPrice;
-        $sql .= " AND product_price <= {$maxPrice}";
+        $sql .= " AND product_price <= ?";
+        $params[] = (int)$maxPrice;
     }
-    $sql .= " LIMIT {$limit} OFFSET {$skip}";
+    $sql .= " LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $skip;
 
     $db = getDb();
-    $products = $db->query($sql)->fetchAll();
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $products = $stmt->fetchAll();
     foreach ($products as &$p) {
         $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
     }
@@ -90,10 +97,10 @@ $router->post('/api/products', function () {
     }
 
     $db = getDb();
-    $db->exec(
-        "INSERT INTO product (user_id, product_title, product_body, product_price) "
-        . "VALUES ('{$current['user_id']}', '{$title}', '{$bodyTxt}', {$price})"
+    $stmt = $db->prepare(
+        "INSERT INTO product (user_id, product_title, product_body, product_price) VALUES (?, ?, ?, ?)"
     );
+    $stmt->execute([$current['user_id'], $title, $bodyTxt, $price]);
     $productId = (int)$db->lastInsertId();
 
     $product = $db->query("SELECT * FROM product WHERE product_id = {$productId}")->fetch();
@@ -105,7 +112,9 @@ $router->post('/api/products', function () {
 $router->get('/api/products/me', function () {
     $current = Auth::user();
     $db = getDb();
-    $products = $db->query("SELECT * FROM product WHERE user_id = '{$current['user_id']}'")->fetchAll();
+    $stmt = $db->prepare("SELECT * FROM product WHERE user_id = ?");
+    $stmt->execute([$current['user_id']]);
+    $products = $stmt->fetchAll();
     foreach ($products as &$p) {
         $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
     }
@@ -119,17 +128,23 @@ $router->get('/api/search', function () {
         Response::error('검색어가 필요합니다.', 400);
     }
 
+    $likeQ = "%{$q}%";
     $db = getDb();
-    $products = $db->query(
-        "SELECT * FROM product WHERE product_title LIKE '%{$q}%' OR product_body LIKE '%{$q}%' LIMIT 10"
-    )->fetchAll();
+
+    $stmt = $db->prepare(
+        "SELECT * FROM product WHERE product_title LIKE ? OR product_body LIKE ? LIMIT 10"
+    );
+    $stmt->execute([$likeQ, $likeQ]);
+    $products = $stmt->fetchAll();
     foreach ($products as &$p) {
         $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
     }
 
-    $users = $db->query(
-        "SELECT * FROM users WHERE nickname LIKE '%{$q}%' OR user_id LIKE '%{$q}%' LIMIT 10"
-    )->fetchAll();
+    $stmt = $db->prepare(
+        "SELECT * FROM users WHERE nickname LIKE ? OR user_id LIKE ? LIMIT 10"
+    );
+    $stmt->execute([$likeQ, $likeQ]);
+    $users = $stmt->fetchAll();
     foreach ($users as &$u) {
         if (isset($u['is_admin'])) {
             $u['is_admin'] = (bool)$u['is_admin'];
@@ -155,8 +170,9 @@ $router->get('/api/products/{product_id}', function (string $productId) {
         "SELECT image_url FROM product_image WHERE product_id = {$pid} ORDER BY image_order"
     )->fetchAll();
 
-    $sellerId = (string)$product['user_id'];
-    $seller = $db->query("SELECT nickname, region FROM users WHERE user_id = '{$sellerId}'")->fetch();
+    $stmt = $db->prepare("SELECT nickname, region FROM users WHERE user_id = ?");
+    $stmt->execute([$product['user_id']]);
+    $seller = $stmt->fetch();
 
     $imageUrls = array_column($images, 'image_url');
 
@@ -203,21 +219,20 @@ $router->patch('/api/products/{product_id}', function (string $productId) {
     }
 
     $allowed = ['product_title', 'product_body', 'product_price'];
-    $sets = [];
+    $sets    = [];
+    $params  = [];
     foreach ($allowed as $key) {
         if (array_key_exists($key, $body)) {
             $val = $body[$key];
-            if ($key === 'product_price') {
-                $sets[] = "{$key} = " . (int)$val;
-            } else {
-                $val = (string)$val;
-                $sets[] = "{$key} = '{$val}'";
-            }
+            $sets[]   = "{$key} = ?";
+            $params[] = ($key === 'product_price') ? (int)$val : (string)$val;
         }
     }
     if (!empty($sets)) {
-        $clause = implode(', ', $sets);
-        $db->exec("UPDATE product SET {$clause} WHERE product_id = {$pid}");
+        $clause   = implode(', ', $sets);
+        $params[] = $pid;
+        $stmt = $db->prepare("UPDATE product SET {$clause} WHERE product_id = ?");
+        $stmt->execute($params);
     }
 
     $updated = $db->query("SELECT * FROM product WHERE product_id = {$pid}")->fetch();
@@ -282,10 +297,10 @@ $router->post('/api/products/{product_id}/images', function (string $productId) 
         move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $filename);
 
         $imageUrl = '/uploads/products/' . $filename;
-        $db->exec(
-            "INSERT INTO product_image (product_id, image_url, image_order) "
-            . "VALUES ({$pid}, '{$imageUrl}', {$idx})"
+        $stmt = $db->prepare(
+            "INSERT INTO product_image (product_id, image_url, image_order) VALUES (?, ?, ?)"
         );
+        $stmt->execute([$pid, $imageUrl, $idx]);
     }
 
     Response::json(['message' => count($files) . '개의 이미지가 업로드되었습니다.']);
@@ -329,7 +344,7 @@ $router->post('/api/products/{product_id}/comments', function (string $productId
     $current = Auth::user();
     $pid = (int)$productId;
     $body = Request::jsonBody();
-    $content = (string)($body['content'] ?? '');
+    $content  = (string)($body['content'] ?? '');
     $parentId = isset($body['parent_comment_id']) ? (int)$body['parent_comment_id'] : null;
 
     if ($content === '') {
@@ -355,11 +370,10 @@ $router->post('/api/products/{product_id}/comments', function (string $productId
     }
 
     $uid = $current['user_id'];
-    $parentSql = $parentId !== null ? (string)$parentId : 'NULL';
-    $db->exec(
-        "INSERT INTO product_comment (product_id, user_id, parent_id, content) "
-        . "VALUES ({$pid}, '{$uid}', {$parentSql}, '{$content}')"
+    $stmt = $db->prepare(
+        "INSERT INTO product_comment (product_id, user_id, parent_id, content) VALUES (?, ?, ?, ?)"
     );
+    $stmt->execute([$pid, $uid, $parentId, $content]);
     $cid = (int)$db->lastInsertId();
 
     $comment = $db->query(
@@ -407,7 +421,9 @@ $router->patch('/api/products/{product_id}/status', function (string $productId)
     if ($product['user_id'] !== $current['user_id']) {
         Response::error('권한이 없습니다.', 403);
     }
-    $db->exec("UPDATE product SET product_status = '{$status}' WHERE product_id = {$pid}");
+
+    $stmt = $db->prepare("UPDATE product SET product_status = ? WHERE product_id = ?");
+    $stmt->execute([$status, $pid]);
 
     $updated = $db->query("SELECT * FROM product WHERE product_id = {$pid}")->fetch();
     $updated['thumbnail_url'] = fetchThumbnail($db, $pid);
