@@ -110,10 +110,6 @@ function renderDetail(share) {
           <div class="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">${escapeHtml(share.description)}</div>
         </div>
 
-        ${!isOwner && !isDone ? `
-        <div class="pt-8 border-t border-gray-100 sticky bottom-0 bg-gray-50/80 backdrop-blur-md py-4 -mx-4 px-4 lg:relative lg:bg-transparent lg:p-0 lg:m-0">
-          <button data-action="chat" class="w-full py-5 px-16 rounded-2xl bg-primary font-bold text-white shadow-xl shadow-primary/25 hover:brightness-110 transition-all transform active:scale-95">채팅하기</button>
-        </div>` : ''}
       </div>
     </div>
 
@@ -131,7 +127,7 @@ function bindActions(share) {
 
     if (action === 'back') history.back();
     else if (action === 'store') location.href = `/store.html?userId=${encodeURIComponent(share.userId)}`;
-    else if (action === 'chat') location.href = '/chat.html';
+
     else if (action === 'delete') {
       if (!confirm('정말 이 나눔 글을 삭제하시겠습니까?')) return;
       try {

@@ -1,5 +1,6 @@
 import { bootstrapLayout, renderIcons } from '../bootstrap.js';
 import { productApi } from '../api/product.js';
+import { shareApi } from '../api/share.js';
 import { bannerApi } from '../api/banner.js';
 import { renderProductCard } from '../components/productCard.js';
 
@@ -109,8 +110,20 @@ async function init() {
   if (!grid) return;
   renderSkeleton(grid);
   try {
-    const products = await productApi.getProducts();
-    renderProducts(grid, products);
+    const [products, shares] = await Promise.all([
+      productApi.getProducts(),
+      shareApi.getShares(),
+    ]);
+    const all = [
+      ...products.map(p => renderProductCard(p)),
+      ...shares.map(s => renderProductCard(s, `/share.html?id=${s.id}`)),
+    ];
+    if (!all.length) {
+      grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-20">상품이 없습니다.</div>`;
+    } else {
+      grid.innerHTML = all.join('');
+      renderIcons();
+    }
   } catch (err) {
     console.error(err);
     grid.innerHTML = `<div class="col-span-full text-center text-red-400 py-20">상품을 불러오지 못했습니다.</div>`;

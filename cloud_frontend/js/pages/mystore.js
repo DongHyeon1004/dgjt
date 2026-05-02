@@ -2,6 +2,7 @@ import { bootstrapLayout, renderIcons } from '../bootstrap.js';
 import { requireAuth } from '../auth/guard.js';
 import { userApi } from '../api/user.js';
 import { productApi } from '../api/product.js';
+import { shareApi } from '../api/share.js';
 import { authApi } from '../api/auth.js';
 import { renderProductCard } from '../components/productCard.js';
 import { getRefreshToken, clearSession } from '../auth/session.js';
@@ -30,9 +31,12 @@ function renderTabs(active) {
   `).join('');
 }
 
-function renderTabContent(active, products) {
+function renderTabContent(active, products, shares) {
   if (active === '상품') {
-    const cards = products.map(renderProductCard).join('');
+    const cards = [
+      ...products.map(p => renderProductCard(p)),
+      ...shares.map(s => renderProductCard(s, `/share.html?id=${s.id}`)),
+    ].join('');
     const addBtn = `
       <a href="/write.html" class="aspect-square rounded-3xl border-4 border-dashed border-gray-100 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-primary/30 hover:text-primary transition-all group">
         <div class="p-5 bg-gray-50 rounded-full group-hover:bg-rose-50 transition-colors">
@@ -46,7 +50,7 @@ function renderTabContent(active, products) {
   return `<div class="py-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200"><p class="text-gray-400 font-bold">아직 내역이 없습니다.</p></div>`;
 }
 
-function render(profile, products, activeTab) {
+function render(profile, products, shares, activeTab) {
   const container = document.getElementById('mystore-container');
   container.innerHTML = `
     <div class="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl shadow-gray-100 border border-gray-100 mb-12">
@@ -68,7 +72,7 @@ function render(profile, products, activeTab) {
           <div class="flex flex-wrap justify-center md:justify-start gap-6 text-sm font-bold text-gray-500">
             <div class="flex items-center gap-2">지역 <span class="text-gray-900">${escapeHtml(profile?.region)}</span></div>
             <div class="flex items-center gap-2">아이디 <span class="text-gray-900">${escapeHtml(profile?.user_id)}</span></div>
-            <div class="flex items-center gap-2">상품판매 <span class="text-gray-900">${products.length}</span></div>
+            <div class="flex items-center gap-2">상품판매 <span class="text-gray-900">${products.length + shares.length}</span></div>
           </div>
           <div class="flex items-center justify-center md:justify-start gap-1 text-orange-400">
             ${renderStars()}
@@ -82,7 +86,7 @@ function render(profile, products, activeTab) {
       </div>
     </div>
     <div id="mystore-tabs" class="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto">${renderTabs(activeTab)}</div>
-    <div id="mystore-tab-content">${renderTabContent(activeTab, products)}</div>
+    <div id="mystore-tab-content">${renderTabContent(activeTab, products, shares)}</div>
   `;
   renderIcons();
 }
@@ -99,13 +103,13 @@ async function handleLogout() {
   location.href = '/';
 }
 
-function bind(profile, products, current) {
+function bind(profile, products, shares, current) {
   document.getElementById('mystore-tabs').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-tab]');
     if (!btn || btn.dataset.tab === current) return;
     const next = btn.dataset.tab;
-    render(profile, products, next);
-    bind(profile, products, next);
+    render(profile, products, shares, next);
+    bind(profile, products, shares, next);
   });
   const logoutBtn = document.getElementById('mystore-logout');
   if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
@@ -115,12 +119,13 @@ async function init() {
   if (!requireAuth('/login.html?redirect=/mystore.html')) return;
   await bootstrapLayout();
   try {
-    const [profile, myProducts] = await Promise.all([
+    const [profile, myProducts, myShares] = await Promise.all([
       userApi.getMyProfile(),
       productApi.getMyProducts(),
+      shareApi.getMyShares(),
     ]);
-    render(profile, myProducts, '상품');
-    bind(profile, myProducts, '상품');
+    render(profile, myProducts, myShares, '상품');
+    bind(profile, myProducts, myShares, '상품');
   } catch (err) {
     console.error(err);
     document.getElementById('mystore-container').innerHTML =
