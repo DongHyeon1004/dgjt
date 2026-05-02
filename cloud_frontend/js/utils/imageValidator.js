@@ -2,8 +2,8 @@
 // Kill Chain 시나리오상 "다층 검증으로 차단되는 정상 영역" — 강한 검증 유지
 // 참고: 진짜 다층 방어는 백엔드에서 (확장자 + MIME + 매직바이트 + 콘텐츠 검증)
 
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export function validateProductImage(file) {

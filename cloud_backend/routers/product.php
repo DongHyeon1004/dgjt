@@ -62,10 +62,6 @@ $router->get('/api/products', function () {
         $sql .= " AND product_price <= ?";
         $params[] = (int)$maxPrice;
     }
-    // [로컬 호환] 클라우드 배포 시 LIMIT/OFFSET을 ? 바인딩으로 원복 필요
-    // $sql .= " LIMIT ? OFFSET ?";
-    // $params[] = $limit;
-    // $params[] = $skip;
     $sql .= " LIMIT {$limit} OFFSET {$skip}";
 
     $db = getDb();

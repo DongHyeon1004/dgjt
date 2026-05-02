@@ -24,9 +24,6 @@ function config(?string $key = null)
             'cors_origins' => [
                 'http://dgjt.duckdns.org',
                 'https://dgjt.duckdns.org',
-                'http://localhost',
-                'http://localhost:8080',
-                'http://127.0.0.1',
             ],
             'jwt' => [
                 'secret'         => getenv('JWT_SECRET'),
