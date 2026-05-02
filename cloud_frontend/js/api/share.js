@@ -1,5 +1,6 @@
 import { apiClient } from './client.js';
 import { config } from '../config.js';
+import { timeAgo } from '../utils/format.js';
 
 export function mapToShare(item) {
   const thumbUrl = item.thumbnail_url
@@ -12,7 +13,7 @@ export function mapToShare(item) {
     price: 0,
     location: item.seller_region || '지역 정보 없음',
     thumbnail: thumbUrl,
-    time: '방금 전',
+    time: timeAgo(item.created_at),
     seller: {
       name: item.seller_nickname || item.user_id || '알 수 없음',
       rating: 5.0,

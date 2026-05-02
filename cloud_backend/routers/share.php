@@ -27,7 +27,7 @@ $router->get('/api/shares', function () {
     if ($limit < 1) $limit = 1;
     if ($limit > 100) $limit = 100;
 
-    $sql    = "SELECT * FROM share WHERE 1=1";
+    $sql    = "SELECT s.*, u.region AS seller_region FROM share s LEFT JOIN users u ON s.user_id = u.user_id WHERE 1=1";
     $params = [];
     if ($search !== null && $search !== '') {
         $sql .= " AND (share_title LIKE ? OR share_body LIKE ?)";

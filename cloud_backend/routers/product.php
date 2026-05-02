@@ -47,7 +47,7 @@ $router->get('/api/products', function () {
     if ($limit < 1) $limit = 1;
     if ($limit > 100) $limit = 100;
 
-    $sql    = "SELECT * FROM product WHERE 1=1";
+    $sql    = "SELECT p.*, u.region AS seller_region FROM product p LEFT JOIN users u ON p.user_id = u.user_id WHERE 1=1";
     $params = [];
     if ($search !== null && $search !== '') {
         $sql .= " AND (product_title LIKE ? OR product_body LIKE ?)";
