@@ -2,13 +2,7 @@ import { apiClient } from './client.js';
 import { config } from '../config.js';
 import { timeAgo } from '../utils/format.js';
 
-const STATUS_MAP = {
-  '예약중': 'reserved',
-  '판매완료': 'sold',
-};
-
 export function mapToProduct(item) {
-  const mappedStatus = STATUS_MAP[item.product_status] || 'sale';
   const thumbUrl = item.thumbnail_url
     ? `${config.uploadsBaseUrl}${item.thumbnail_url}`
     : 'https://via.placeholder.com/800';
@@ -32,7 +26,6 @@ export function mapToProduct(item) {
       : [],
     likes: 0,
     views: 0,
-    status: mappedStatus,
     userId: item.user_id,
   };
 }
@@ -66,10 +59,6 @@ export const productApi = {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     const res = await apiClient.post(`/products/${id}/images`, formData);
-    return res.data;
-  },
-  updateProductStatus: async (id, status) => {
-    const res = await apiClient.patch(`/products/${id}/status`, { status });
     return res.data;
   },
   getRelatedProducts: async (id) => {

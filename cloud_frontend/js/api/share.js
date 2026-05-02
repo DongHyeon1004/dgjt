@@ -26,7 +26,6 @@ export function mapToShare(item) {
       : [],
     likes: 0,
     views: 0,
-    status: item.share_status || 'available',
     userId: item.user_id,
   };
 }
@@ -60,10 +59,6 @@ export const shareApi = {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     const res = await apiClient.post(`/shares/${id}/images`, formData);
-    return res.data;
-  },
-  updateShareStatus: async (id, status) => {
-    const res = await apiClient.patch(`/shares/${id}/status`, { status });
     return res.data;
   },
 };

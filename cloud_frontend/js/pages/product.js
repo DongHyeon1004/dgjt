@@ -66,7 +66,7 @@ function renderDetail(product) {
       <div class="flex flex-col h-full py-4">
         <div class="pb-8 border-b border-gray-100">
           <div class="flex justify-between items-start mb-6">
-            <span class="px-4 py-1.5 bg-rose-50 text-primary text-xs font-bold rounded-full tracking-wider uppercase">${escapeHtml(product.category || '')}</span>
+            <span class="px-4 py-1.5 bg-rose-50 text-primary text-xs font-bold rounded-full tracking-wider uppercase">판매</span>
             <div class="flex gap-3">
               ${ownerActions}
               <button class="p-3 rounded-full bg-white shadow-md text-gray-400 hover:text-primary hover:shadow-lg transition-all"><i data-lucide="heart" width="22" height="22"></i></button>

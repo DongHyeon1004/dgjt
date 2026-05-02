@@ -11,16 +11,6 @@ function escapeHtml(s) {
 
 export function renderProductCard(product, href) {
   href = typeof href === 'string' ? href : `/product.html?id=${encodeURIComponent(product.id)}`;
-  const statusLabel =
-    product.status === 'sold' ? '판매완료' :
-    product.status === 'reserved' ? '예약중' : null;
-
-  const overlay = statusLabel
-    ? `<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-         <span class="text-white font-bold text-lg border-2 border-white px-4 py-1 rounded">${statusLabel}</span>
-       </div>`
-    : '';
-
   return `
     <div class="group">
       <a href="${escapeHtml(href)}" class="block">
@@ -33,7 +23,6 @@ export function renderProductCard(product, href) {
           <div class="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 transition-colors">
             <i data-lucide="heart" width="18" height="18"></i>
           </div>
-          ${overlay}
         </div>
         <div class="space-y-1">
           <h3 class="text-[15px] font-medium text-gray-800 line-clamp-2 min-h-[44px] group-hover:text-primary transition-colors">

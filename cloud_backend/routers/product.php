@@ -396,26 +396,3 @@ $router->delete('/api/products/{product_id}/comments/{comment_id}', function (st
     Response::json(['message' => '댓글이 삭제되었습니다.']);
 });
 
-// 상태 변경
-$router->patch('/api/products/{product_id}/status', function (string $productId) {
-    $current = Auth::user();
-    $body = Request::jsonBody();
-    $status = (string)($body['status'] ?? '');
-    $pid = (int)$productId;
-
-    $db = getDb();
-    $product = $db->query("SELECT * FROM product WHERE product_id = {$pid}")->fetch();
-    if (!$product) {
-        Response::error('상품을 찾을 수 없습니다.', 404);
-    }
-    if ($product['user_id'] !== $current['user_id']) {
-        Response::error('권한이 없습니다.', 403);
-    }
-
-    $stmt = $db->prepare("UPDATE product SET product_status = ? WHERE product_id = ?");
-    $stmt->execute([$status, $pid]);
-
-    $updated = $db->query("SELECT * FROM product WHERE product_id = {$pid}")->fetch();
-    $updated['thumbnail_url'] = fetchThumbnail($db, $pid);
-    Response::json($updated);
-});

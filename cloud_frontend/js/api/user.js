@@ -25,6 +25,10 @@ export const userApi = {
     const res = await apiClient.get(`/users/${userId}/reviews`);
     return res.data;
   },
+  getUserShares: async (userId) => {
+    const res = await apiClient.get(`/users/${userId}/shares`);
+    return res.data;
+  },
   checkNickname: async (nickname) => {
     const res = await apiClient.get(`/users/check-nickname?nickname=${encodeURIComponent(nickname)}`);
     return res.data;

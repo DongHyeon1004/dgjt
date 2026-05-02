@@ -330,26 +330,3 @@ $router->delete('/api/shares/{share_id}/comments/{comment_id}', function (string
     Response::json(['message' => '댓글이 삭제되었습니다.']);
 });
 
-// 상태 변경
-$router->patch('/api/shares/{share_id}/status', function (string $shareId) {
-    $current = Auth::user();
-    $body = Request::jsonBody();
-    $status = (string)($body['status'] ?? '');
-    $sid = (int)$shareId;
-
-    $db = getDb();
-    $share = $db->query("SELECT * FROM share WHERE share_id = {$sid}")->fetch();
-    if (!$share) {
-        Response::error('나눔을 찾을 수 없습니다.', 404);
-    }
-    if ($share['user_id'] !== $current['user_id']) {
-        Response::error('권한이 없습니다.', 403);
-    }
-
-    $stmt = $db->prepare("UPDATE share SET share_status = ? WHERE share_id = ?");
-    $stmt->execute([$status, $sid]);
-
-    $updated = $db->query("SELECT * FROM share WHERE share_id = {$sid}")->fetch();
-    $updated['thumbnail_url'] = fetchShareThumbnail($db, $sid);
-    Response::json($updated);
-});

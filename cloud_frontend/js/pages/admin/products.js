@@ -17,12 +17,6 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function statusBadge(status) {
-  if (status === 'sale') return ['bg-emerald-100 text-emerald-800', '판매중'];
-  if (status === 'reserved') return ['bg-amber-100 text-amber-800', '예약중'];
-  return ['bg-gray-100 text-gray-800', '판매완료'];
-}
-
 function getFilteredProducts() {
   const term = state.searchTerm.toLowerCase();
   if (!term) return state.products;
@@ -33,54 +27,48 @@ function getFilteredProducts() {
 }
 
 function renderRows(products) {
-  return products.map((p) => {
-    const [statusCls, statusLabel] = statusBadge(p.status);
-    return `
-      <tr class="hover:bg-gray-50/50 transition-colors">
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-              <img src="${escapeHtml(p.thumbnail)}" alt="${escapeHtml(p.title)}" class="w-full h-full object-cover" />
-            </div>
-            <div>
-              <a href="/product.html?id=${encodeURIComponent(p.id)}" class="text-sm font-bold text-gray-900 hover:text-primary transition-colors flex items-center gap-1">
-                ${escapeHtml(p.title)}
-                <i data-lucide="external-link" width="12" height="12" class="text-gray-400"></i>
-              </a>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase">${escapeHtml(p.category || '')}</span>
-                <span class="text-[10px] text-gray-400 flex items-center gap-1"><i data-lucide="calendar" width="10" height="10"></i>${escapeHtml(p.time)}</span>
-              </div>
+  return products.map((p) => `
+    <tr class="hover:bg-gray-50/50 transition-colors">
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+            <img src="${escapeHtml(p.thumbnail)}" alt="${escapeHtml(p.title)}" class="w-full h-full object-cover" />
+          </div>
+          <div>
+            <a href="/product.html?id=${encodeURIComponent(p.id)}" class="text-sm font-bold text-gray-900 hover:text-primary transition-colors flex items-center gap-1">
+              ${escapeHtml(p.title)}
+              <i data-lucide="external-link" width="12" height="12" class="text-gray-400"></i>
+            </a>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase">${escapeHtml(p.category || '')}</span>
+              <span class="text-[10px] text-gray-400 flex items-center gap-1"><i data-lucide="calendar" width="10" height="10"></i>${escapeHtml(p.time)}</span>
             </div>
           </div>
-        </td>
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
-            <img src="${escapeHtml(p.seller.avatar)}" alt="${escapeHtml(p.seller.name)}" class="w-6 h-6 rounded-full" />
-            ${escapeHtml(p.seller.name)}
-          </div>
-        </td>
-        <td class="px-6 py-4"><span class="text-sm font-bold text-gray-900">${escapeHtml(formatPrice(p.price))}</span></td>
-        <td class="px-6 py-4">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusCls}">${statusLabel}</span>
-        </td>
-        <td class="px-6 py-4">
-          <div class="flex gap-2">
-            <button data-delete="${escapeHtml(p.id)}" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="상품 삭제">
-              <i data-lucide="trash-2" width="18" height="18"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
+          <img src="${escapeHtml(p.seller.avatar)}" alt="${escapeHtml(p.seller.name)}" class="w-6 h-6 rounded-full" />
+          ${escapeHtml(p.seller.name)}
+        </div>
+      </td>
+      <td class="px-6 py-4"><span class="text-sm font-bold text-gray-900">${escapeHtml(formatPrice(p.price))}</span></td>
+      <td class="px-6 py-4">
+        <div class="flex gap-2">
+          <button data-delete="${escapeHtml(p.id)}" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="상품 삭제">
+            <i data-lucide="trash-2" width="18" height="18"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function renderTable() {
   const filtered = getFilteredProducts();
   const tbody = filtered.length
     ? `<tbody class="divide-y divide-gray-50">${renderRows(filtered)}</tbody>`
-    : `<tbody><tr><td colspan="5"><div class="p-20 text-center text-gray-500 font-medium">상품이 없습니다.</div></td></tr></tbody>`;
+    : `<tbody><tr><td colspan="4"><div class="p-20 text-center text-gray-500 font-medium">상품이 없습니다.</div></td></tr></tbody>`;
 
   setAdminPageContent(`
     <div class="space-y-6">
@@ -117,7 +105,6 @@ function renderTable() {
                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">상품 정보</th>
                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">판매자</th>
                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">가격</th>
-                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">상태</th>
                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">관리</th>
               </tr>
             </thead>

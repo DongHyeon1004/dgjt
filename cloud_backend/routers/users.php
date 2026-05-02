@@ -80,6 +80,18 @@ $router->get('/api/users/{user_id}', function (string $userId) {
     Response::json($user);
 });
 
+// 유저별 나눔 목록
+$router->get('/api/users/{user_id}/shares', function (string $userId) {
+    $db = getDb();
+    $stmt = $db->prepare("SELECT * FROM share WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $shares = $stmt->fetchAll();
+    foreach ($shares as &$s) {
+        $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
+    }
+    Response::json($shares);
+});
+
 // 유저별 상품 목록
 $router->get('/api/users/{user_id}/products', function (string $userId) {
     $db = getDb();

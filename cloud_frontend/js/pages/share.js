@@ -32,9 +32,15 @@ function renderNotFound() {
 function renderDetail(share) {
   const isOwner = !!(getUserId() && String(getUserId()) === String(share.userId));
   const canDelete = isAdmin() || isOwner;
-  const isDone = share.status === 'completed';
 
-  const ownerActions = canDelete ? `
+  const ownerActions = isOwner ? `
+    <button data-action="edit" class="p-3 rounded-full bg-white shadow-md text-gray-400 hover:text-primary hover:shadow-lg transition-all" title="나눔 수정">
+      <i data-lucide="edit" width="22" height="22"></i>
+    </button>
+    <button data-action="delete" class="p-3 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 hover:shadow-lg transition-all" title="삭제">
+      <i data-lucide="trash-2" width="22" height="22"></i>
+    </button>
+  ` : canDelete ? `
     <button data-action="delete" class="p-3 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 hover:shadow-lg transition-all" title="삭제">
       <i data-lucide="trash-2" width="22" height="22"></i>
     </button>
@@ -45,10 +51,6 @@ function renderDetail(share) {
       <img src="${escapeHtml(img)}" alt="${escapeHtml(share.title)} ${idx}" class="w-full h-full object-cover" />
     </div>
   `).join('');
-
-  const statusBadge = isDone
-    ? `<span class="px-4 py-1.5 bg-gray-100 text-gray-500 text-xs font-bold rounded-full">나눔 완료</span>`
-    : `<span class="px-4 py-1.5 bg-green-50 text-green-600 text-xs font-bold rounded-full">나눔 가능</span>`;
 
   renderState(`
     <button data-action="back" class="md:hidden flex items-center gap-1 mb-4 text-gray-600">
@@ -69,7 +71,6 @@ function renderDetail(share) {
           <div class="flex justify-between items-start mb-6">
             <div class="flex items-center gap-2">
               <span class="px-4 py-1.5 bg-rose-50 text-primary text-xs font-bold rounded-full tracking-wider uppercase">나눔</span>
-              ${statusBadge}
             </div>
             <div class="flex gap-3">
               ${ownerActions}
@@ -126,6 +127,7 @@ function bindActions(share) {
     const action = btn.dataset.action;
 
     if (action === 'back') history.back();
+    else if (action === 'edit') location.href = `/edit-share.html?id=${encodeURIComponent(share.id)}`;
     else if (action === 'store') location.href = `/store.html?userId=${encodeURIComponent(share.userId)}`;
 
     else if (action === 'delete') {
