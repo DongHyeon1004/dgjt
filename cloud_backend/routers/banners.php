@@ -42,8 +42,7 @@ $router->post('/api/banners', function () {
     $ext = strtolower(pathinfo((string)$image['name'], PATHINFO_EXTENSION));
     if ($ext === '') $ext = 'jpg';
 
-    $basename  = pathinfo((string)$image['name'], PATHINFO_FILENAME);
-    $filename  = date('Ymd') . '_' . md5($basename) . '.' . $ext;
+    $filename  = uuid4() . '.' . $ext;
     $bannerDir = config('upload_dirs')['banners'];
     $savePath  = $bannerDir . '/' . $filename;
 

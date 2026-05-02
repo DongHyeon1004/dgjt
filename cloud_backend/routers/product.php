@@ -19,8 +19,8 @@ if (!function_exists('fetchThumbnail')) {
 if (!function_exists('isValidProductImage')) {
     function isValidProductImage(string $content, string $contentType, string $filename): bool
     {
-        $allowedExt  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        $allowedMime = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExt  = ['jpg', 'jpeg', 'png'];
+        $allowedMime = ['image/jpeg', 'image/png'];
 
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         if (!in_array($ext, $allowedExt, true)) return false;
@@ -29,13 +29,6 @@ if (!function_exists('isValidProductImage')) {
         // magic bytes 검사
         if (substr($content, 0, 3) === "\xFF\xD8\xFF") return true; // JPEG
         if (substr($content, 0, 8) === "\x89PNG\r\n\x1A\n") return true; // PNG
-        $head6 = substr($content, 0, 6);
-        if ($head6 === 'GIF87a' || $head6 === 'GIF89a') return true; // GIF
-        if (
-            substr($content, 0, 4) === 'RIFF'
-            && strlen($content) >= 12
-            && substr($content, 8, 4) === 'WEBP'
-        ) return true; // WEBP
 
         return false;
     }
@@ -294,8 +287,7 @@ $router->post('/api/products/{product_id}/images', function (string $productId) 
         }
 
         $ext      = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
-        $basename = pathinfo((string)$file['name'], PATHINFO_FILENAME);
-        $filename = date('Ymd') . '_' . md5($basename) . '.' . $ext;
+        $filename = uuid4() . '.' . $ext;
         move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $filename);
 
         $imageUrl = '/uploads/products/' . $filename;

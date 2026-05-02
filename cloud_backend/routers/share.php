@@ -221,8 +221,7 @@ $router->post('/api/shares/{share_id}/images', function (string $shareId) {
         }
 
         $ext      = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
-        $basename = pathinfo((string)$file['name'], PATHINFO_FILENAME);
-        $filename = date('Ymd') . '_' . md5($basename) . '.' . $ext;
+        $filename = uuid4() . '.' . $ext;
         move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $filename);
 
         $imageUrl = '/uploads/shares/' . $filename;
