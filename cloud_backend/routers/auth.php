@@ -24,6 +24,14 @@ $router->post('/api/auth/register', function () {
         Response::error('이미 사용 중인 아이디입니다.', 409);
     }
 
+    if ($nickname !== '') {
+        $stmt = $db->prepare("SELECT user_id FROM users WHERE nickname = ?");
+        $stmt->execute([$nickname]);
+        if ($stmt->fetch()) {
+            Response::error('이미 사용 중인 닉네임입니다.', 409);
+        }
+    }
+
     $stmt = $db->prepare(
         "INSERT INTO users (user_id, user_pwd, nickname, phone_num, email, region) VALUES (?, ?, ?, ?, ?, ?)"
     );

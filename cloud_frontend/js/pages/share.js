@@ -78,7 +78,7 @@ function renderDetail(share) {
           </div>
 
           <h1 class="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight">${escapeHtml(share.title)}</h1>
-          <p class="text-5xl font-black text-green-500 mb-8 tracking-tighter">무료나눔</p>
+          <p class="text-5xl font-black text-primary mb-8 tracking-tighter">무료나눔</p>
 
           <div class="flex gap-8 text-sm font-medium text-gray-400">
             <div class="flex items-center gap-2"><i data-lucide="clock" width="18" height="18"></i> <span class="text-gray-600">${escapeHtml(share.time)}</span></div>

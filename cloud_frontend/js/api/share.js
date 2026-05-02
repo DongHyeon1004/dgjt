@@ -11,6 +11,7 @@ export function mapToShare(item) {
     id: String(item.share_id),
     title: item.share_title,
     price: 0,
+    category: '나눔',
     location: item.seller_region || '지역 정보 없음',
     thumbnail: thumbUrl,
     time: timeAgo(item.created_at),

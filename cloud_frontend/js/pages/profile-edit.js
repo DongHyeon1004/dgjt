@@ -49,13 +49,18 @@ function bindNicknameCheck() {
     btn.disabled = true;
     btn.textContent = '확인 중...';
     try {
-      await userApi.checkNickname(nickname);
-      nicknameChecked = true;
-      setNicknameMsg('사용 가능한 닉네임입니다.', true);
+      const result = await userApi.checkNickname(nickname);
+      if (!result.available) {
+        nicknameChecked = false;
+        setNicknameMsg('이미 사용 중인 닉네임입니다.', false);
+      } else {
+        nicknameChecked = true;
+        setNicknameMsg('사용 가능한 닉네임입니다.', true);
+      }
     } catch (err) {
       nicknameChecked = false;
       const detail = err.response?.data?.detail || err.response?.data?.message;
-      setNicknameMsg(detail || '이미 사용 중인 닉네임입니다.', false);
+      setNicknameMsg(detail || '중복 확인 중 오류가 발생했습니다.', false);
     } finally {
       btn.disabled = false;
       btn.textContent = '중복확인';
