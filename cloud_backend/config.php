@@ -1,6 +1,24 @@
 <?php
 declare(strict_types=1);
 
+require __DIR__ . '/vendor/autoload.php';
+use Aws\SecretsManager\SecretsManagerClient;
+
+function getDbCredentials(): array {
+    static $creds = null;
+    if ($creds === null) {
+        $client = new SecretsManagerClient([
+            'version' => 'latest',
+            'region'  => 'ap-northeast-2',
+        ]);
+        $secret = json_decode($client->getSecretValue([
+            'SecretId' => 'prod/db/password',
+        ])['SecretString']);
+        $creds = ['user' => $secret->username, 'pass' => $secret->password];
+    }
+    return $creds;
+}
+
 // Apache SetEnv(클라우드)가 없을 때 .env 파일에서 환경변수 로드
 (function () {
     $envFile = __DIR__ . '/.env';
@@ -34,8 +52,8 @@ function config(?string $key = null)
                 'host' => getenv('DB_HOST'),
                 'port' => getenv('DB_PORT') ?: '3306',
                 'name' => getenv('DB_NAME'),
-                'user' => getenv('DB_USER'),
-                'pass' => getenv('DB_PASS'),
+                'user' => getDbCredentials()['user'],
+                'pass' => getDbCredentials()['pass'],
             ],
             'upload_dirs' => [
                 'banners'  => __DIR__ . '/uploads/banners',
