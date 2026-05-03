@@ -6,13 +6,9 @@ declare(strict_types=1);
 // ===== 헬퍼 =====
 
 if (!function_exists('fetchShareThumbnail')) {
-    function fetchShareThumbnail(PDO $db, int $shareId): string
+    function fetchShareThumbnail(int $shareId): string
     {
-        $img = $db->query(
-            "SELECT image_url FROM share_image WHERE share_id = {$shareId} "
-            . "ORDER BY image_order LIMIT 1"
-        )->fetch();
-        return $img ? $img['image_url'] : '/uploads/basic_image.png';
+        return "/api/shares/{$shareId}/thumbnail";
     }
 }
 
@@ -41,7 +37,7 @@ $router->get('/api/shares', function () {
     $stmt->execute($params);
     $shares = $stmt->fetchAll();
     foreach ($shares as &$s) {
-        $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
+        $s['thumbnail_url'] = fetchShareThumbnail((int)$s['share_id']);
     }
     Response::json($shares);
 });
@@ -66,7 +62,7 @@ $router->post('/api/shares', function () {
     $shareId = (int)$db->lastInsertId();
 
     $share = $db->query("SELECT * FROM share WHERE share_id = {$shareId}")->fetch();
-    $share['thumbnail_url'] = '/uploads/basic_image.png';
+    $share['thumbnail_url'] = fetchShareThumbnail($shareId);
     Response::json($share, 201);
 });
 
@@ -78,7 +74,7 @@ $router->get('/api/shares/me', function () {
     $stmt->execute([$current['user_id']]);
     $shares = $stmt->fetchAll();
     foreach ($shares as &$s) {
-        $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
+        $s['thumbnail_url'] = fetchShareThumbnail((int)$s['share_id']);
     }
     Response::json($shares);
 });
@@ -93,19 +89,19 @@ $router->get('/api/shares/{share_id}', function (string $shareId) {
     }
 
     $images = $db->query(
-        "SELECT image_url FROM share_image WHERE share_id = {$sid} ORDER BY image_order"
+        "SELECT image_order FROM share_image WHERE share_id = {$sid} ORDER BY image_order"
     )->fetchAll();
 
     $stmt = $db->prepare("SELECT nickname, region FROM users WHERE user_id = ?");
     $stmt->execute([$share['user_id']]);
     $seller = $stmt->fetch();
 
-    $imageUrls = array_column($images, 'image_url');
+    $orders = array_column($images, 'image_order');
 
-    $share['thumbnail_url']   = $imageUrls[0] ?? '/uploads/basic_image.png';
+    $share['thumbnail_url']   = fetchShareThumbnail($sid);
     $share['seller_nickname'] = $seller['nickname'] ?? '';
     $share['seller_region']   = $seller['region']   ?? '';
-    $share['image_urls']      = $imageUrls;
+    $share['image_urls']      = array_map(fn($o) => "/api/shares/{$sid}/images/{$o}", $orders);
 
     Response::json($share);
 });
@@ -119,13 +115,14 @@ $router->get('/api/shares/{share_id}/images', function (string $shareId) {
         Response::error('나눔을 찾을 수 없습니다.', 404);
     }
     $images = $db->query(
-        "SELECT image_order, image_url FROM share_image WHERE share_id = {$sid} ORDER BY image_order"
+        "SELECT image_order FROM share_image WHERE share_id = {$sid} ORDER BY image_order"
     )->fetchAll();
 
+    $orders = array_column($images, 'image_order');
     Response::json([
         'share_id'     => $sid,
-        'image_orders' => array_column($images, 'image_order'),
-        'image_urls'   => array_column($images, 'image_url'),
+        'image_orders' => $orders,
+        'image_urls'   => array_map(fn($o) => "/api/shares/{$sid}/images/{$o}", $orders),
     ]);
 });
 
@@ -161,7 +158,7 @@ $router->patch('/api/shares/{share_id}', function (string $shareId) {
     }
 
     $updated = $db->query("SELECT * FROM share WHERE share_id = {$sid}")->fetch();
-    $updated['thumbnail_url'] = fetchShareThumbnail($db, $sid);
+    $updated['thumbnail_url'] = fetchShareThumbnail($sid);
     Response::json($updated);
 });
 
@@ -228,6 +225,34 @@ $router->post('/api/shares/{share_id}/images', function (string $shareId) {
     }
 
     Response::json(['message' => count($files) . '개의 이미지가 업로드되었습니다.']);
+});
+
+// 나눔 썸네일 서빙
+$router->get('/api/shares/{share_id}/thumbnail', function (string $shareId) {
+    $sid = (int)$shareId;
+    $db = getDb();
+    $img = $db->query(
+        "SELECT image_url FROM share_image WHERE share_id = {$sid} ORDER BY image_order LIMIT 1"
+    )->fetch();
+    $path = $img
+        ? __DIR__ . '/../' . ltrim($img['image_url'], '/')
+        : __DIR__ . '/../uploads/basic_image.png';
+    serveFile($path);
+});
+
+// 나눔 이미지 서빙
+$router->get('/api/shares/{share_id}/images/{order}', function (string $shareId, string $order) {
+    $sid = (int)$shareId;
+    $ord = (int)$order;
+    $db = getDb();
+    $img = $db->query(
+        "SELECT image_url FROM share_image WHERE share_id = {$sid} AND image_order = {$ord}"
+    )->fetch();
+    if (!$img) {
+        http_response_code(404);
+        exit;
+    }
+    serveFile(__DIR__ . '/../' . ltrim($img['image_url'], '/'));
 });
 
 // 댓글 목록

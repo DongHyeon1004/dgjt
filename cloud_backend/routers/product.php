@@ -6,13 +6,9 @@ declare(strict_types=1);
 // ===== 헬퍼 =====
 
 if (!function_exists('fetchThumbnail')) {
-    function fetchThumbnail(PDO $db, int $productId): string
+    function fetchThumbnail(int $productId): string
     {
-        $img = $db->query(
-            "SELECT image_url FROM product_image WHERE product_id = {$productId} "
-            . "ORDER BY image_order LIMIT 1"
-        )->fetch();
-        return $img ? $img['image_url'] : '/uploads/basic_image.png';
+        return "/api/products/{$productId}/thumbnail";
     }
 }
 
@@ -69,7 +65,7 @@ $router->get('/api/products', function () {
     $stmt->execute($params);
     $products = $stmt->fetchAll();
     foreach ($products as &$p) {
-        $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
+        $p['thumbnail_url'] = fetchThumbnail((int)$p['product_id']);
     }
     Response::json($products);
 });
@@ -95,7 +91,7 @@ $router->post('/api/products', function () {
     $productId = (int)$db->lastInsertId();
 
     $product = $db->query("SELECT * FROM product WHERE product_id = {$productId}")->fetch();
-    $product['thumbnail_url'] = null;
+    $product['thumbnail_url'] = fetchThumbnail($productId);
     Response::json($product, 201);
 });
 
@@ -107,7 +103,7 @@ $router->get('/api/products/me', function () {
     $stmt->execute([$current['user_id']]);
     $products = $stmt->fetchAll();
     foreach ($products as &$p) {
-        $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
+        $p['thumbnail_url'] = fetchThumbnail((int)$p['product_id']);
     }
     Response::json($products);
 });
@@ -128,7 +124,7 @@ $router->get('/api/search', function () {
     $stmt->execute([$likeQ, $likeQ]);
     $products = $stmt->fetchAll();
     foreach ($products as &$p) {
-        $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
+        $p['thumbnail_url'] = fetchThumbnail((int)$p['product_id']);
     }
 
     $stmt = $db->prepare(
@@ -158,19 +154,19 @@ $router->get('/api/products/{product_id}', function (string $productId) {
     }
 
     $images = $db->query(
-        "SELECT image_url FROM product_image WHERE product_id = {$pid} ORDER BY image_order"
+        "SELECT image_order FROM product_image WHERE product_id = {$pid} ORDER BY image_order"
     )->fetchAll();
 
     $stmt = $db->prepare("SELECT nickname, region FROM users WHERE user_id = ?");
     $stmt->execute([$product['user_id']]);
     $seller = $stmt->fetch();
 
-    $imageUrls = array_column($images, 'image_url');
+    $orders = array_column($images, 'image_order');
 
-    $product['thumbnail_url']   = $imageUrls[0] ?? '/uploads/basic_image.png';
+    $product['thumbnail_url']   = fetchThumbnail($pid);
     $product['seller_nickname'] = $seller['nickname'] ?? '';
     $product['seller_region']   = $seller['region']   ?? '';
-    $product['image_urls']      = $imageUrls;
+    $product['image_urls']      = array_map(fn($o) => "/api/products/{$pid}/images/{$o}", $orders);
 
     Response::json($product);
 });
@@ -184,13 +180,14 @@ $router->get('/api/products/{product_id}/images', function (string $productId) {
         Response::error('상품을 찾을 수 없습니다.', 404);
     }
     $images = $db->query(
-        "SELECT image_order, image_url FROM product_image WHERE product_id = {$pid} ORDER BY image_order"
+        "SELECT image_order FROM product_image WHERE product_id = {$pid} ORDER BY image_order"
     )->fetchAll();
 
+    $orders = array_column($images, 'image_order');
     Response::json([
         'product_id'   => $pid,
-        'image_orders' => array_column($images, 'image_order'),
-        'image_urls'   => array_column($images, 'image_url'),
+        'image_orders' => $orders,
+        'image_urls'   => array_map(fn($o) => "/api/products/{$pid}/images/{$o}", $orders),
     ]);
 });
 
@@ -227,7 +224,7 @@ $router->patch('/api/products/{product_id}', function (string $productId) {
     }
 
     $updated = $db->query("SELECT * FROM product WHERE product_id = {$pid}")->fetch();
-    $updated['thumbnail_url'] = fetchThumbnail($db, $pid);
+    $updated['thumbnail_url'] = fetchThumbnail($pid);
     Response::json($updated);
 });
 
@@ -294,6 +291,34 @@ $router->post('/api/products/{product_id}/images', function (string $productId) 
     }
 
     Response::json(['message' => count($files) . '개의 이미지가 업로드되었습니다.']);
+});
+
+// 상품 썸네일 서빙
+$router->get('/api/products/{product_id}/thumbnail', function (string $productId) {
+    $pid = (int)$productId;
+    $db = getDb();
+    $img = $db->query(
+        "SELECT image_url FROM product_image WHERE product_id = {$pid} ORDER BY image_order LIMIT 1"
+    )->fetch();
+    $path = $img
+        ? __DIR__ . '/../' . ltrim($img['image_url'], '/')
+        : __DIR__ . '/../uploads/basic_image.png';
+    serveFile($path);
+});
+
+// 상품 이미지 서빙
+$router->get('/api/products/{product_id}/images/{order}', function (string $productId, string $order) {
+    $pid = (int)$productId;
+    $ord = (int)$order;
+    $db = getDb();
+    $img = $db->query(
+        "SELECT image_url FROM product_image WHERE product_id = {$pid} AND image_order = {$ord}"
+    )->fetch();
+    if (!$img) {
+        http_response_code(404);
+        exit;
+    }
+    serveFile(__DIR__ . '/../' . ltrim($img['image_url'], '/'));
 });
 
 // 댓글 목록

@@ -87,7 +87,7 @@ $router->get('/api/users/{user_id}/shares', function (string $userId) {
     $stmt->execute([$userId]);
     $shares = $stmt->fetchAll();
     foreach ($shares as &$s) {
-        $s['thumbnail_url'] = fetchShareThumbnail($db, (int)$s['share_id']);
+        $s['thumbnail_url'] = fetchShareThumbnail((int)$s['share_id']);
     }
     Response::json($shares);
 });
@@ -99,7 +99,7 @@ $router->get('/api/users/{user_id}/products', function (string $userId) {
     $stmt->execute([$userId]);
     $products = $stmt->fetchAll();
     foreach ($products as &$p) {
-        $p['thumbnail_url'] = fetchThumbnail($db, (int)$p['product_id']);
+        $p['thumbnail_url'] = fetchThumbnail((int)$p['product_id']);
     }
     Response::json($products);
 });

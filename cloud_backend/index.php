@@ -49,6 +49,23 @@ function uuid4(): string {
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
+function serveFile(string $absPath): void {
+    if (!is_file($absPath)) {
+        http_response_code(404);
+        exit;
+    }
+    $ext  = strtolower(pathinfo($absPath, PATHINFO_EXTENSION));
+    $mime = match($ext) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png'         => 'image/png',
+        default       => 'application/octet-stream',
+    };
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . filesize($absPath));
+    readfile($absPath);
+    exit;
+}
+
 // ===== 라우터 인스턴스 =====
 $router = new Router();
 

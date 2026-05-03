@@ -11,6 +11,7 @@ $router->get('/api/banners', function () {
         if (isset($b['is_active'])) {
             $b['is_active'] = (bool)$b['is_active'];
         }
+        $b['image_url'] = "/api/banners/{$b['id']}/image";
     }
     Response::json($banners);
 });
@@ -22,6 +23,7 @@ $router->get('/api/banners/all', function () {
     $banners = $db->query("SELECT * FROM banners ORDER BY id DESC")->fetchAll();
     foreach ($banners as &$b) {
         $b['is_active'] = (bool)$b['is_active'];
+        $b['image_url'] = "/api/banners/{$b['id']}/image";
     }
     Response::json($banners);
 });
@@ -60,8 +62,9 @@ $router->post('/api/banners', function () {
     $bannerId = (int)$db->lastInsertId();
 
     $banner = $db->query("SELECT * FROM banners WHERE id = {$bannerId}")->fetch();
-    if ($banner && isset($banner['is_active'])) {
+    if ($banner) {
         $banner['is_active'] = (bool)$banner['is_active'];
+        $banner['image_url'] = "/api/banners/{$bannerId}/image";
     }
     Response::json($banner);
 });
@@ -79,7 +82,19 @@ $router->patch('/api/banners/{banner_id}', function (string $bannerId) {
     $db->exec("UPDATE banners SET is_active = {$newStatus} WHERE id = {$bid}");
     $updated = $db->query("SELECT * FROM banners WHERE id = {$bid}")->fetch();
     $updated['is_active'] = (bool)$updated['is_active'];
+    $updated['image_url'] = "/api/banners/{$bid}/image";
     Response::json($updated);
+});
+
+// 배너 이미지 서빙
+$router->get('/api/banners/{banner_id}/image', function (string $bannerId) {
+    $bid = (int)$bannerId;
+    $db = getDb();
+    $banner = $db->query("SELECT image_url FROM banners WHERE id = {$bid}")->fetch();
+    if (!$banner || empty($banner['image_url'])) {
+        serveFile(__DIR__ . '/../uploads/basic_image.png');
+    }
+    serveFile(__DIR__ . '/../' . ltrim($banner['image_url'], '/'));
 });
 
 // 배너 삭제 (관리자)
