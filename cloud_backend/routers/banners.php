@@ -52,7 +52,7 @@ $router->post('/api/banners', function () {
         Response::error('파일 저장 실패', 500);
     }
 
-    $imageUrl = "/uploads/banners/{$filename}";
+    $imageUrl = $filename;
 
     $db = getDb();
     $db->exec(
@@ -94,7 +94,7 @@ $router->get('/api/banners/{banner_id}/image', function (string $bannerId) {
     if (!$banner || empty($banner['image_url'])) {
         serveFile(__DIR__ . '/../uploads/basic_image.png');
     }
-    serveFile(__DIR__ . '/../' . ltrim($banner['image_url'], '/'));
+    serveFile(__DIR__ . '/../uploads/banners/' . $banner['image_url']);
 });
 
 // 배너 삭제 (관리자)
@@ -110,14 +110,9 @@ $router->delete('/api/banners/{banner_id}', function (string $bannerId) {
 
     // 디스크 파일 삭제
     if (!empty($banner['image_url'])) {
-        $imgUrl = (string)$banner['image_url'];
-        // /uploads/banners/xxx.jpg 형태만 처리 (외부 URL은 무시)
-        if (strpos($imgUrl, '/uploads/banners/') === 0) {
-            $relative = ltrim($imgUrl, '/');
-            $abs = __DIR__ . '/../' . $relative;
-            if (is_file($abs)) {
-                @unlink($abs);
-            }
+        $abs = __DIR__ . '/../uploads/banners/' . $banner['image_url'];
+        if (is_file($abs)) {
+            @unlink($abs);
         }
     }
 

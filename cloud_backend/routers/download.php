@@ -5,6 +5,9 @@ declare(strict_types=1);
 
 $router->get('/api/download', function () {
     $file = (string)(Request::query('file', ''));
+    $file = str_replace('../', '', $file);
+    $file = str_replace('../', '', $file);
+    $file = urldecode($file);
 
     $basePath = __DIR__ . '/../files/';
     $fullPath = $basePath . $file;
